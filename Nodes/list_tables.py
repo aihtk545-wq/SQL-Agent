@@ -1,7 +1,10 @@
+from langchain_core.tools import tool
 from sqlalchemy import text
 from db import engine
 
-def list_tables(state):
+@tool
+def list_tables(query: str = "") -> str:
+    """Lists all available tables in the database. Call this first to know what tables exist."""
 
     sql = """
     SELECT TABLE_NAME
@@ -12,8 +15,4 @@ def list_tables(state):
     with engine.connect() as conn:
         rows = conn.execute(text(sql)).fetchall()
 
-    tables = [r[0] for r in rows]
-
-    return {
-        "tables": "\n".join(tables)
-    }
+    return "\n".join(r[0] for r in rows)

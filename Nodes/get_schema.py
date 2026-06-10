@@ -1,11 +1,18 @@
+from langchain_core.tools import tool
 from sqlalchemy import text
 from db import engine
 
-def get_schema(state):
+@tool
+def get_schema(tables: str) -> str:
+    """Gets the columns and foreign key relationships for the given comma-separated table names."""
 
-    col_sql = """
+    table_list = [t.strip() for t in tables.split(",")]
+    placeholders = ", ".join(f"'{t}'" for t in table_list)
+
+    col_sql = f"""
     SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE
     FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME IN ({placeholders})
     """
 
     fk_sql = """
@@ -26,12 +33,6 @@ def get_schema(state):
         fk_rows = conn.execute(text(fk_sql)).fetchall()
 
     schema_text = "\n".join(f"{r[0]}.{r[1]} ({r[2]})" for r in col_rows)
+    fk_text = "\n".join(f"{r[0]}.{r[1]} -> {r[2]}.{r[3]}" for r in fk_rows)
 
-    fk_text = "\n".join(
-        f"{r[0]}.{r[1]} -> {r[2]}.{r[3]}"
-        for r in fk_rows
-    )
-
-    return {
-        "schema": f"Columns:\n{schema_text}\n\nRelationships:\n{fk_text}"
-    }
+    return f"Columns:\n{schema_text}\n\nRelationships:\n{fk_text}"
