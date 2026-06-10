@@ -1,6 +1,6 @@
-from typing import TypedDict
+from typing import TypedDict, Optional
 
-class AgentState(TypedDict):
+class AgentState(TypedDict, total=False):
     question: str
 
     tables: str
